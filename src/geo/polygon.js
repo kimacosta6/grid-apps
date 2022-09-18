@@ -1454,6 +1454,46 @@ class Polygon {
         return POLY.expand([this], -offset, this.getZ(), output);
     }
 
+    inset(opt = {}) {
+        const { min, max, dist, gather } = opt;
+        if (gather) {
+            for (let i=0, p=this.points, l1=p.length, l2=l1+1; i<l1; i++) {
+                let p1 = p[i];
+                let p2 = p[(i+1)%l1];
+                let dx = p2.x - p1.x;
+                let dy = p2.y - p1.y;
+                let dl = Math.sqrt(dx * dx + dy * dy);
+                gather.push(p1);
+                if (dl > max) {
+                    let fit = (dl / dist) | 0;
+                    let pad = (dl - (fit * dist)) / 2;
+                    let cx = dx / dl;
+                    let cy = dy / dl;
+                    let ox = p1.x;
+                    let oy = p1.y;
+                    let ix = (cx * (dl - pad * 2)) / fit;
+                    let iy = (cy * (dl - pad * 2)) / fit;
+                    if (pad) {
+                        ox += pad * cx;
+                        oy += pad * cy;
+                    } else {
+                        ox += ix;
+                        oy += iy;
+                    }
+                    for (let i=0; i<=fit; i++) {
+                        gather.push(newPoint(ox, oy, p1.z));
+                        ox += ix;
+                        oy += iy;
+                    }
+                }
+            }
+            return;
+        }
+        const points = [];
+        this.inset({ min, max, dist, gather: points });
+        return { points };
+    }
+
     /**
      * todo need something more clever for polygons that overlap with
      * todo differing resolutions (like circles)

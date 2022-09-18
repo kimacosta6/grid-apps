@@ -848,6 +848,9 @@ function doRender(slice, isSynth, params, devel) {
             // slice.output().setLayer(`g${i}`, 0x888888).addPoly(poly);
             slice.output().setLayer(`g${i}`, color[group]).addPoly(poly);
         });
+        // test inset
+        if (slice.tops) {
+        }
     }
 
     // console.log(slice.index, slice.render.stats);
