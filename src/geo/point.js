@@ -42,6 +42,11 @@ class Point {
         return this;
     }
 
+    setPolygon(p) {
+        this.poly = p;
+        return this;
+    }
+
     swapXZ() {
         let p = this,
             t = p.x;

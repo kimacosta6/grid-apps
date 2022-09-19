@@ -857,6 +857,15 @@ class Polygon {
         return this;
     }
 
+    addMany(x, y, z) {
+        let arg = [...arguments];
+        let ai = 0;
+        while (ai < arg.length) {
+            this.push(newPoint(arg[ai++], arg[ai++], arg[ai++]));
+        }
+        return this;
+    }
+
     addObj(obj) {
         if (Array.isArray(obj)) {
             for (let o of obj) {
@@ -1455,8 +1464,14 @@ class Polygon {
     }
 
     inset(opt = {}) {
-        const { min, max, dist, gather } = opt;
+        const { min, max, dist, gather, cw=1 } = opt;
         if (gather) {
+            if (cw) {
+                this.setClockwise();
+            } else {
+                this.setCounterClockwise();
+            }
+            // split long polygon segments into segments < max
             for (let i=0, p=this.points, l1=p.length, l2=l1+1; i<l1; i++) {
                 let p1 = p[i];
                 let p2 = p[(i+1)%l1];
@@ -1465,23 +1480,19 @@ class Polygon {
                 let dl = Math.sqrt(dx * dx + dy * dy);
                 gather.push(p1);
                 if (dl > max) {
-                    let fit = (dl / dist) | 0;
-                    let pad = (dl - (fit * dist)) / 2;
-                    let cx = dx / dl;
-                    let cy = dy / dl;
+                    let div = dl / dist;
+                    let fit = div | 0;
+                    let ix = dx / fit;
+                    let iy = dy / fit;
                     let ox = p1.x;
                     let oy = p1.y;
-                    let ix = (cx * (dl - pad * 2)) / fit;
-                    let iy = (cy * (dl - pad * 2)) / fit;
-                    if (pad) {
-                        ox += pad * cx;
-                        oy += pad * cy;
-                    } else {
-                        ox += ix;
-                        oy += iy;
+                    ox += ix;
+                    oy += iy;
+                    if (div === fit) {
+                        fit--;
                     }
-                    for (let i=0; i<=fit; i++) {
-                        gather.push(newPoint(ox, oy, p1.z));
+                    for (let i=0; i<fit; i++) {
+                        gather.push(newPoint(ox, oy, p1.z).setPolygon(this));
                         ox += ix;
                         oy += iy;
                     }
@@ -1491,7 +1502,32 @@ class Polygon {
         }
         const points = [];
         this.inset({ min, max, dist, gather: points });
-        return { points };
+        // calculate segment normals which are used to calculate vertex normals
+        const snorms = [];
+        for (let i=0, l=points.length; i<l; i++) {
+            let p1 = points[i];
+            let p2 = points[(i+1)%l];
+            let dx = p2.x - p1.x;
+            let dy = p2.y - p1.y;
+            let mx = Math.sqrt(dx * dx + dy * dy);
+            dx /= mx;
+            dy /= mx;
+            snorms.push({dx: dy, dy: -dx});
+        }
+        // calculate vertex normals from segments normals
+        const vnorms = [];
+        for (let i=0, l=snorms.length; i<l; i++) {
+            let n1 = snorms[(i+l-1)%l];
+            let n2 = snorms[(i+l)%l];
+            vnorms.push({dx: (n1.dx+n2.dx)/2, dy: (n1.dy+n2.dy)/2 });
+        }
+        // create normal line array (points)
+        const norms = [];
+        for (let i=0, l=points.length; i<l; i++) {
+            norms.push(points[i]);
+            norms.push(points[i].clone().add({x: vnorms[i].dx, y: vnorms[i].dy, z: 0}));
+        }
+        return { points, snorms, vnorms, norms };
     }
 
     /**
