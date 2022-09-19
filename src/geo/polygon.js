@@ -1488,9 +1488,7 @@ class Polygon {
                     let oy = p1.y;
                     ox += ix;
                     oy += iy;
-                    if (div === fit) {
-                        fit--;
-                    }
+                    fit--;
                     for (let i=0; i<fit; i++) {
                         gather.push(newPoint(ox, oy, p1.z).setPolygon(this));
                         ox += ix;

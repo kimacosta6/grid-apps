@@ -849,6 +849,7 @@ function doRender(slice, isSynth, params, devel) {
             slice.output().setLayer(`g${i}`, color[group]).addPoly(poly);
         });
         // test inset
+        if (1)
         for (let top of slice.tops || []) {
             const { norms } = top.poly.inset({ min: 0.2, max: 0.6, dist: 0.4 });
             slice.output().setLayer(`norm`, 0xaa5555).addLines(norms);
