@@ -73,8 +73,8 @@ mesh.model = class MeshModel extends mesh.object {
         super(id);
         let { file, mesh, vertices, indices, normals } = data;
 
-        if (!mesh) {
-            dbug.error(`'${file}' missing mesh data`);
+        if (!(mesh || (vertices && indices)))) {
+            dbug.error(`'${file}' missing model data`);
             return;
         }
 
@@ -128,7 +128,7 @@ mesh.model = class MeshModel extends mesh.object {
             arr[i] = arr[i++] + y;
             arr[i] = arr[i++] + z;
         }
-        this.reload(arr, attr.index ? attr.index.array : undefined);
+        this.load(arr, attr.index ? attr.index.array : undefined);
         return this;
     }
 
@@ -141,7 +141,7 @@ mesh.model = class MeshModel extends mesh.object {
             arr[i] = arr[i++] *= y;
             arr[i] = arr[i++] *= z;
         }
-        this.reload(arr, attr.index ? attr.index.array : undefined);
+        this.load(arr, attr.index ? attr.index.array : undefined);
         return this;
     }
 
@@ -193,58 +193,61 @@ mesh.model = class MeshModel extends mesh.object {
     }
 
     load(vertices, indices, normals) {
-        let geo = new BufferGeometry();
-        geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        if (indices) {
-            // unroll indexed geometries
-            geo.setIndex(new BufferAttribute(indices, 1));
-            geo = geo.toNonIndexed();
+        this.data = { vertices, indices, normals };
+        const mesh = this.mesh;
+        const geo = mesh ? mesh. geometry : new BufferGeometry();
+        const was = mesh ? this.wireframe(false) : undefined;
+        if (vertices) {
+            geo.setAttribute('position', new BufferAttribute(vertices, 3));
         }
-        if (!normals) {
+        if (indices) {
+            geo.setIndex(new BufferAttribute(indices, 1));
+        }
+        if (normals) {
+            geo.setAttribute('normal', new BufferAttribute(normals, 3));
+        } else {
             geo.computeVertexNormals();
         }
-
-        let meh = this.mesh = new Mesh(geo, [
-            this.mats.normal,
-            this.mats.face
-        ]);
-        geo.addGroup(0, Infinity, 0);
-        meh.receiveShadow = true;
-        meh.castShadow = true;
-        meh.renderOrder = 1;
-        // sets fallback opacity for wireframe toggle
-        this.opacity(1);
-        // this ref allows clicks to be traced to models and groups
-        meh.model = this;
-        // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
-        // sync data to worker
-        worker.model_load({id: this.id, name: this.file, vertices});
-    }
-
-    reload(vertices, indices) {
-        let was = this.wireframe(false);
-        let geo = this.mesh.geometry;
-        geo.setAttribute('position', new BufferAttribute(vertices, 3));
-        geo.setAttribute('normal', undefined);
-        if (indices) {
-            geo.setIndex(new BufferAttribute(indices, 1));
+        if (!mesh) {
+            mesh = this.mesh = new Mesh(geo, [
+                this.mats.normal,
+                this.mats.face
+            ]);
+            geo.addGroup(0, Infinity, 0);
+            mesh.receiveShadow = true;
+            mesh.castShadow = true;
+            mesh.renderOrder = 1;
+            // sets fallback opacity for wireframe toggle
+            this.opacity(1);
+            // this ref allows clicks to be traced to models and groups
+            mesh.model = this;
         }
         // signal util.box3expand that geometry changed
         geo._model_invalid = true;
-        geo.computeVertexNormals();
         // allows raycasting to work
         geo.computeBoundingSphere();
+        if (was) {
+            // restore wireframe state
+            this.wireframe(was);
+            // fixup normals
+            this.normals({ refresh: true });
+            // re-gen face index in surface mode
+            mesh.api.mode.check();
+        }
+        this.sync_db();
+        this.sync_worker();
+    }
+
+    sync_db() {
+        const { vertices, indices, normals } = this.data;
         // persist in db so it can be restored on page load
-        mapp.db.space.put(this.id, { file: this.file, mesh: vertices });
+        mapp.db.space.put(this.id, { file: this.file, vertices, indices, normals });
+    }
+
+    sync_worker() {
+        const { vertices, indices, normals } = this.data;
         // sync data to worker
-        worker.model_load({id: this.id, name: this.name, vertices});
-        // restore wireframe state
-        this.wireframe(was);
-        // fixup normals
-        this.normals({refresh: true});
-        // re-gen face index in surface mode
-        mesh.api.mode.check();
+        worker.model_load({id: this.id, name: this.file, vertices, indices, normals});
     }
 
     rename(file) {
@@ -425,7 +428,7 @@ mesh.model = class MeshModel extends mesh.object {
                 }
                 break;
         }
-        this.reload(arr);
+        this.load(arr);
         if (this._norm) this._norm.update();
     }
 
@@ -447,7 +450,7 @@ mesh.model = class MeshModel extends mesh.object {
                 }).applyMatrix4(m4));
                 if (o1.length) {
                     // o1 becomes bottom
-                    this.reload(o1);
+                    this.load(o1);
                     resolve(model);
                 } else {
                     this.remove();
@@ -468,7 +471,7 @@ mesh.model = class MeshModel extends mesh.object {
             id: this.id,
             opt: {}
         }).then(data => {
-            this.reload(data);
+            this.load(data);
         });
     }
 
@@ -527,7 +530,7 @@ mesh.model = class MeshModel extends mesh.object {
             newverts.set(slice, pos);
             pos += count;
         }
-        this.reload(newverts);
+        this.load(newverts);
         // clear face selections (since they've been deleted);
         this.sel.faces = [];
         this.updateSelections();

@@ -591,7 +591,7 @@ const tool = {
                 id: m.id, opt
             }).then(data => {
                 if (data) {
-                    m.reload(
+                    m.load(
                         data.vertices,
                         data.indices,
                         data.normals
