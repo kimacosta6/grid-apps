@@ -270,7 +270,6 @@ function init(mod) {
         });
         // console.log({script: key, files: script[key]});
     }
-    console.log(script);
 
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;

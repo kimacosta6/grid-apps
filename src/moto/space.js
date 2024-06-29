@@ -9,7 +9,7 @@
 gapp.register("moto.space", [], (root, exports) => {
 
     const { moto } = root;
-    const { WebGLRenderer, WebGL1Renderer } = THREE;
+    const { WebGLRenderer } = THREE;
     const nav = navigator;
 
     let WIN = window,
@@ -1332,14 +1332,7 @@ gapp.register("moto.space", [], (root, exports) => {
             domelement.style.width = width();
             domelement.style.height = height();
 
-            // workaround for https://bugs.chromium.org/p/chromium/issues/detail?id=1321452
-            // and android requires older rendered to avoid visual Z order artifacts
-            let Renderer =
-                (nav.platform.indexOf('Linux') >= 0) ||
-                (nav.platform === 'MacIntel' && nav.vendor.indexOf('Google') >= 0) ?
-                WebGL1Renderer : WebGLRenderer;
-
-            renderer = new Renderer({
+            renderer = new WebGLRenderer({
                 antialias: antiAlias,
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true

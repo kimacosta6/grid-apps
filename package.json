@@ -73,7 +73,7 @@
         "mac-verify": "spctl --assess -vv --type install dist/*/*.app",
         "prebuild": "node bin/electron-pre.js",
         "postbuild": "node bin/electron-post.js",
-        "preinstall": "node bin/install-pre.js"
+        "preinstall": "node bin/install-pre.js; npx webpack --config bin/webpack-three.js"
     },
     "main": "app-el.js",
     "build": {

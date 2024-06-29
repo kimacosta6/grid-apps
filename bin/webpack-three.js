@@ -7,16 +7,12 @@ module.exports = {
     output: {
         path: path.resolve('src/ext'),
         filename: 'three.js',
-        module: true,
-        environment: {
-            module: true,
-        },
+        library: 'ThreeBundle',
+        libraryTarget: 'umd',
+        globalObject: 'this'
     },
     resolve: {
         extensions: ['.mjs', '.js'],
-    },
-    experiments: {
-        outputModule: true,
     },
     module: {
         rules: [
@@ -29,7 +25,7 @@ module.exports = {
         ],
     },
     optimization: {
-        minimize: true,
+        minimize: false,
         minimizer: [
             new TerserPlugin({
                 extractComments: false,

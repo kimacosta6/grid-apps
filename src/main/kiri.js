@@ -2,7 +2,6 @@
 
 "use strict";
 
-// dep: kiri.main
 gapp.main("main.kiri", [], (root) => {
 
     const { kiri } = root;
