@@ -254,7 +254,7 @@ gapp.register("moto.space", [], (root, exports) => {
     }
 
     function addLight(x, y, z, i, color = 0xffffff) {
-        let l = new THREE.DirectionalLight(color, i, 0);
+        let l = new THREE.DirectionalLight(color, i * 4);
         l.position.set(x,z,y);
         if (lightInfo.debug) {
             let b; l.add(b = new THREE.Mesh(
@@ -1337,6 +1337,10 @@ gapp.register("moto.space", [], (root, exports) => {
                 preserveDrawingBuffer: true,
                 logarithmicDepthBuffer: true
             });
+
+            // THREE.ColorManagement.enabled = false;
+            // renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
+
             renderer.localClippingEnabled = true;
             camera = ortho ?
                 new THREE.OrthographicCamera(-100 * aspect(), 100 * aspect(), 100, -100, 0.1, 100000) :
