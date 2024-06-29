@@ -3,10 +3,9 @@
 "use strict";
 
 // dep: ext.three
-// dep: ext.three-bgu
-// dep: ext.three-svg
-// dep: ext.three-bvh
 gapp.register("add.three", [], (root, exports) => {
+
+console.log('RUNNING ADD.THREE', root);
 
 let MP = THREE.Mesh.prototype,
     XP = THREE.Box3.prototype,

@@ -270,6 +270,7 @@ function init(mod) {
         });
         // console.log({script: key, files: script[key]});
     }
+    console.log(script);
 
     mod.on.test((req) => {
         let cookie = cookieValue(req.headers.cookie, "version") || undefined;
@@ -475,7 +476,6 @@ const script = {
         "&kiri/lang-en"
     ],
     kiri_work : [
-        // "#ext/manifold2",
         "kiri-run/worker",
         "&main/kiri",
     ],
